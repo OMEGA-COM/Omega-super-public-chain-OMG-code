@@ -38,3 +38,12 @@ I've now tried this on both a light client and a fast sync. Both return a valid 
 
 Update 2:
 This issue occurs on both v1.9.9 and v1.9.14.
+launch
+OMG (full name Omega, Chinese name omega) is a number containing
+Decentralized figures for assets, digital currency transactions and big data transmission
+Asset trading platform, established in 2019. The platform was jointly initiated by Omega foundation and Longji capital of the United States to establish a truly decentralized autonomous organization, and the code has been open-source on GitHub.
+Open source ecology
+OMG exchange has broken all kinds of restrictions of traditional exchange platform and established a huge
+The token ecosystem of the exchange platform, which is based on industry and landing
+It is used to enable platform currency to realize platform, platform currency, project party assets and investment
+The virtuous circle of capital assets.
