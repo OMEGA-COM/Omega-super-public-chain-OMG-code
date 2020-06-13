@@ -1,0 +1,76 @@
+I'm starting a private testner in a docker container. In genesis.json that was used in geth init ... I have the "extradata" field:
+
+"extradata": "1D000000000000000000000000000000000000000000000000000000000000000028d9f2192f8cec7724c6c71e3048d03372f8d5d00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+According to documentation, this is how one would make the 0x28d9f2192f8cec7724c6c71e3048d03372f8d5d0 account to be able to sign blocks. (Althouth there is a tool that generates a different extradata contents.)
+
+System information
+Geth version: 1.9.14
+OS & Version: node:10-alpine
+
+Expected behaviour
+When I start the blockchain with 0x28d9f2192f8cec7724c6c71e3048d03372f8d5d0 unlocked, I expect to see normal mining activity.
+
+Actual behaviour
+geth ignores the extradata field and instead takes the first account from datadir/keystore and makes it the signer.
+
+INFO [05-22|14:46:46.730] Etherbase automatically configured       address=0xa6e96AC2C446F89699479FBb1bf0DE93719E2105
+INFO [05-22|14:46:46.730] Commit new mining work                   number=1 sealhash="437fc5…8ecd60" uncles=0 txs=0 gas=0 fees=0 elapsed="73.42µs"
+WARN [05-22|14:46:46.730] Block sealing failed                     err="unauthorized signer"
+Steps to reproduce the behaviour
+Dockerfile
+ARG GETH_VERSION=1.9.14
+ARG DATADIR=/testnet-datadir
+
+# Build Geth in a stock Go builder container
+FROM golang:1.14-alpine as builder
+ARG GETH_VERSION
+
+RUN apk add --no-cache make gcc musl-dev linux-headers
+
+WORKDIR /
+RUN wget https://github.com/ethereum/go-ethereum/archive/v${GETH_VERSION}.tar.gz
+RUN tar -xvzf v${GETH_VERSION}.tar.gz
+RUN cd go-ethereum-${GETH_VERSION} && make geth
+
+# Pull Geth into a second stage deploy alpine container
+FROM node:10-alpine as setup
+ARG DATADIR
+ENV DATADIR=${DATADIR}
+
+# Copy geth built in previous step
+COPY --from=builder /go-ethereum-${GETH_VERSION}/build/bin/geth /usr/local/bin/
+
+# Initialize testnet
+COPY genesis.json ${DATADIR}/
+RUN geth init --datadir ${DATADIR} ${DATADIR}/genesis.json
+
+EXPOSE 8545 8546 8547 30303 30303/udp
+
+ENTRYPOINT geth --datadir ${DATADIR} --networkid 15
+genesis.json
+{
+    "config": {
+        "chainId": 15,
+        "homesteadBlock":0,
+        "eip150Block":0,
+        "eip150Hash": "0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a",
+        "eip155Block":0,
+        "eip158Block":0,
+        "eip160Block":0,
+        "byzantiumBlock":0,
+        "constantinopleBlock":0,
+        "petersburgBlock":0,
+        "istanbulBlock":0,
+        "clique": {
+            "period":5,
+            "epoch":30000
+        }
+    },
+    "difficulty": "1",
+    "gasLimit": "0xa00000",
+    "extradata": "0x000000000000000000000000000000000000000000000000000000000000000028d9f2192f8cec7724c6c71e3048d03372f8d5d00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "alloc": {
+      "28D9F2192F8CeC7724c6C71e3048D03372F8d5D0": { "balance": "20000000000000000000" },
+      "a6e96AC2C446F89699479FBb1bf0DE93719E2105": { "balance": "20000000000000000000" }
+    }
+}
